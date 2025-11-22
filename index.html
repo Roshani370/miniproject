@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Task Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .task-item {
+            animation: slideIn 0.3s ease-out;
+        }
+        .ai-thinking {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="gradient-bg text-white py-8 mb-6 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <h1 class="text-4xl font-bold mb-2">🤖 AI Task Manager</h1>
+            <p class="text-purple-100">Intelligent task management powered by AI</p>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 pb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Task Area -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Add Task Form -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">Create New Task</h2>
+                    <form id="taskForm" class="space-y-4">
+                        <div>
+                            <input type="text" id="taskTitle" placeholder="Task title..." 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" required>
+                        </div>
+                        <div>
+                            <textarea id="taskDescription" placeholder="Task description..." rows="2"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"></textarea>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                                <select id="taskPriority" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                <select id="taskCategory" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                    <option value="work">Work</option>
+                                    <option value="personal">Personal</option>
+                                    <option value="shopping">Shopping</option>
+                                    <option value="health">Health</option>
+                                    <option value="learning">Learning</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                                <input type="date" id="taskDueDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="submit" class="flex-1 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition font-semibold">
+                                ➕ Add Task
+                            </button>
+                            <button type="button" id="aiBreakdownBtn" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition font-semibold">
+                                🤖 AI Breakdown
+                            </button>
+                            <button type="button" id="aiSuggestPriorityBtn" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition font-semibold">
+                                ✨ AI Priority
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Filters and Search -->
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <input type="text" id="searchTasks" placeholder="🔍 Search tasks..." 
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        <select id="filterCategory" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            <option value="all">All Categories</option>
+                            <option value="work">Work</option>
+                            <option value="personal">Personal</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="health">Health</option>
+                            <option value="learning">Learning</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <select id="filterPriority" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            <option value="all">All Priorities</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                        <select id="sortTasks" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            <option value="dateDesc">Newest First</option>
+                            <option value="dateAsc">Oldest First</option>
+                            <option value="priorityDesc">High Priority First</option>
+                            <option value="dueDate">Due Date</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Task List -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Tasks</h2>
+                        <div class="flex gap-2">
+                            <button id="showAll" class="px-4 py-1 bg-gray-200 rounded-lg hover:bg-gray-300 transition text-sm font-medium">All</button>
+                            <button id="showActive" class="px-4 py-1 bg-gray-200 rounded-lg hover:bg-gray-300 transition text-sm font-medium">Active</button>
+                            <button id="showCompleted" class="px-4 py-1 bg-gray-200 rounded-lg hover:bg-gray-300 transition text-sm font-medium">Completed</button>
+                        </div>
+                    </div>
+                    <div id="taskList" class="space-y-3"></div>
+                    <div id="emptyState" class="text-center py-12 text-gray-400 hidden">
+                        <div class="text-6xl mb-4">📝</div>
+                        <p class="text-lg">No tasks yet. Create your first task above!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- AI Assistant -->
+                <div class="bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg shadow-md p-6 text-white">
+                    <h2 class="text-xl font-bold mb-3 flex items-center gap-2">
+                        <span>🤖</span> AI Assistant
+                    </h2>
+                    <div id="aiInsights" class="space-y-2 text-sm">
+                        <p class="bg-white/20 rounded p-3 backdrop-blur">
+                            <strong>💡 Tip:</strong> Use AI Breakdown to split complex tasks into smaller steps!
+                        </p>
+                    </div>
+                    <button id="getAiInsights" class="w-full mt-4 bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition font-semibold">
+                        Get AI Insights
+                    </button>
+                </div>
+
+                <!-- Statistics -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-bold mb-4 text-gray-800">📊 Statistics</h2>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Total Tasks:</span>
+                            <span id="statTotal" class="font-bold text-purple-600">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Active:</span>
+                            <span id="statActive" class="font-bold text-blue-600">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Completed:</span>
+                            <span id="statCompleted" class="font-bold text-green-600">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Completion Rate:</span>
+                            <span id="statRate" class="font-bold text-yellow-600">0%</span>
+                        </div>
+                        <div class="pt-3 border-t">
+                            <div class="text-sm text-gray-600 mb-1">High Priority:</div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div id="statHighBar" class="bg-red-500 h-2 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-bold mb-4 text-gray-800">⚡ Quick Actions</h2>
+                    <div class="space-y-2">
+                        <button id="clearCompleted" class="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition font-semibold">
+                            🗑️ Clear Completed
+                        </button>
+                        <button id="exportTasks" class="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition font-semibold">
+                            📥 Export Tasks
+                        </button>
+                        <button id="importTasks" class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition font-semibold">
+                            📤 Import Tasks
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Edit Task</h2>
+            <form id="editForm" class="space-y-4">
+                <input type="hidden" id="editTaskId">
+                <div>
+                    <input type="text" id="editTaskTitle" placeholder="Task title..." 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
+                </div>
+                <div>
+                    <textarea id="editTaskDescription" placeholder="Task description..." rows="3"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"></textarea>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                        <select id="editTaskPriority" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <select id="editTaskCategory" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="work">Work</option>
+                            <option value="personal">Personal</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="health">Health</option>
+                            <option value="learning">Learning</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                        <input type="date" id="editTaskDueDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition font-semibold">
+                        Save Changes
+                    </button>
+                    <button type="button" id="cancelEdit" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Task Manager Class
+        class TaskManager {
+            constructor() {
+                this.tasks = this.loadTasks();
+                this.currentFilter = 'all';
+                this.init();
+            }
+
+            init() {
+                this.renderTasks();
+                this.updateStatistics();
+                this.attachEventListeners();
+            }
+
+            loadTasks() {
+                const tasks = localStorage.getItem('tasks');
+                return tasks ? JSON.parse(tasks) : [];
+            }
+
+            saveTasks() {
+                localStorage.setItem('tasks', JSON.stringify(this.tasks));
+            }
+
+            addTask(task) {
+                const newTask = {
+                    id: Date.now(),
+                    ...task,
+                    completed: false,
+                    createdAt: new Date().toISOString(),
+                    subtasks: []
+                };
+                this.tasks.unshift(newTask);
+                this.saveTasks();
+                this.renderTasks();
+                this.updateStatistics();
+            }
+
+            deleteTask(id) {
+                this.tasks = this.tasks.filter(task => task.id !== id);
+                this.saveTasks();
+                this.renderTasks();
+                this.updateStatistics();
+            }
+
+            toggleTask(id) {
+                const task = this.tasks.find(t => t.id === id);
+                if (task) {
+                    task.completed = !task.completed;
+                    this.saveTasks();
+                    this.renderTasks();
+                    this.updateStatistics();
+                }
+            }
+
+            updateTask(id, updates) {
+                const taskIndex = this.tasks.findIndex(t => t.id === id);
+                if (taskIndex !== -1) {
+                    this.tasks[taskIndex] = { ...this.tasks[taskIndex], ...updates };
+                    this.saveTasks();
+                    this.renderTasks();
+                    this.updateStatistics();
+                }
+            }
+
+            getFilteredTasks() {
+                let filtered = [...this.tasks];
+
+                // Status filter
+                if (this.currentFilter === 'active') {
+                    filtered = filtered.filter(t => !t.completed);
+                } else if (this.currentFilter === 'completed') {
+                    filtered = filtered.filter(t => t.completed);
+                }
+
+                // Category filter
+                const categoryFilter = document.getElementById('filterCategory').value;
+                if (categoryFilter !== 'all') {
+                    filtered = filtered.filter(t => t.category === categoryFilter);
+                }
+
+                // Priority filter
+                const priorityFilter = document.getElementById('filterPriority').value;
+                if (priorityFilter !== 'all') {
+                    filtered = filtered.filter(t => t.priority === priorityFilter);
+                }
+
+                // Search filter
+                const searchTerm = document.getElementById('searchTasks').value.toLowerCase();
+                if (searchTerm) {
+                    filtered = filtered.filter(t => 
+                        t.title.toLowerCase().includes(searchTerm) || 
+                        (t.description && t.description.toLowerCase().includes(searchTerm))
+                    );
+                }
+
+                // Sort
+                const sortBy = document.getElementById('sortTasks').value;
+                filtered.sort((a, b) => {
+                    switch (sortBy) {
+                        case 'dateAsc':
+                            return new Date(a.createdAt) - new Date(b.createdAt);
+                        case 'dateDesc':
+                            return new Date(b.createdAt) - new Date(a.createdAt);
+                        case 'priorityDesc':
+                            const priorityOrder = { high: 3, medium: 2, low: 1 };
+                            return priorityOrder[b.priority] - priorityOrder[a.priority];
+                        case 'dueDate':
+                            if (!a.dueDate) return 1;
+                            if (!b.dueDate) return -1;
+                            return new Date(a.dueDate) - new Date(b.dueDate);
+                        default:
+                            return 0;
+                    }
+                });
+
+                return filtered;
+            }
+
+            renderTasks() {
+                const taskList = document.getElementById('taskList');
+                const emptyState = document.getElementById('emptyState');
+                const filtered = this.getFilteredTasks();
+
+                if (filtered.length === 0) {
+                    taskList.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+                taskList.innerHTML = filtered.map(task => this.createTaskHTML(task)).join('');
+            }
+
+            createTaskHTML(task) {
+                const priorityColors = {
+                    high: 'bg-red-100 text-red-800 border-red-300',
+                    medium: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+                    low: 'bg-green-100 text-green-800 border-green-300'
+                };
+
+                const categoryIcons = {
+                    work: '💼',
+                    personal: '👤',
+                    shopping: '🛒',
+                    health: '❤️',
+                    learning: '📚',
+                    other: '📌'
+                };
+
+                const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && !task.completed;
+                const dueDateDisplay = task.dueDate ? 
+                    `<span class="${isOverdue ? 'text-red-600 font-semibold' : 'text-gray-600'}">${isOverdue ? '⚠️ ' : '📅 '}${new Date(task.dueDate).toLocaleDateString()}</span>` : '';
+
+                const subtasksHTML = task.subtasks && task.subtasks.length > 0 ? 
+                    `<div class="mt-2 ml-6 space-y-1">
+                        ${task.subtasks.map(st => `
+                            <div class="text-sm text-gray-600 flex items-center gap-2">
+                                <span class="text-xs">▸</span> ${st}
+                            </div>
+                        `).join('')}
+                    </div>` : '';
+
+                return `
+                    <div class="task-item border border-gray-200 rounded-lg p-4 hover:shadow-md transition ${task.completed ? 'bg-gray-50 opacity-75' : 'bg-white'}">
+                        <div class="flex items-start gap-3">
+                            <input type="checkbox" ${task.completed ? 'checked' : ''} 
+                                onclick="taskManager.toggleTask(${task.id})"
+                                class="mt-1 w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
+                            <div class="flex-1">
+                                <div class="flex items-start justify-between gap-2 mb-2">
+                                    <h3 class="font-semibold text-lg ${task.completed ? 'line-through text-gray-500' : 'text-gray-800'}">
+                                        ${task.title}
+                                    </h3>
+                                    <div class="flex gap-2">
+                                        <button onclick="taskManager.editTask(${task.id})" 
+                                            class="text-blue-600 hover:text-blue-800 text-sm font-medium">✏️ Edit</button>
+                                        <button onclick="taskManager.deleteTask(${task.id})" 
+                                            class="text-red-600 hover:text-red-800 text-sm font-medium">🗑️</button>
+                                    </div>
+                                </div>
+                                ${task.description ? `<p class="text-gray-600 text-sm mb-2">${task.description}</p>` : ''}
+                                ${subtasksHTML}
+                                <div class="flex flex-wrap gap-2 mt-3">
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium ${priorityColors[task.priority]} border">
+                                        ${task.priority.toUpperCase()}
+                                    </span>
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-300">
+                                        ${categoryIcons[task.category]} ${task.category}
+                                    </span>
+                                    ${dueDateDisplay}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            editTask(id) {
+                const task = this.tasks.find(t => t.id === id);
+                if (!task) return;
+
+                document.getElementById('editTaskId').value = id;
+                document.getElementById('editTaskTitle').value = task.title;
+                document.getElementById('editTaskDescription').value = task.description || '';
+                document.getElementById('editTaskPriority').value = task.priority;
+                document.getElementById('editTaskCategory').value = task.category;
+                document.getElementById('editTaskDueDate').value = task.dueDate || '';
+
+                document.getElementById('editModal').classList.remove('hidden');
+            }
+
+            updateStatistics() {
+                const total = this.tasks.length;
+                const completed = this.tasks.filter(t => t.completed).length;
+                const active = total - completed;
+                const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+                const highPriority = this.tasks.filter(t => t.priority === 'high' && !t.completed).length;
+                const highPercentage = active > 0 ? (highPriority / active) * 100 : 0;
+
+                document.getElementById('statTotal').textContent = total;
+                document.getElementById('statActive').textContent = active;
+                document.getElementById('statCompleted').textContent = completed;
+                document.getElementById('statRate').textContent = rate + '%';
+                document.getElementById('statHighBar').style.width = highPercentage + '%';
+            }
+
+            clearCompleted() {
+                if (confirm('Are you sure you want to delete all completed tasks?')) {
+                    this.tasks = this.tasks.filter(t => !t.completed);
+                    this.saveTasks();
+                    this.renderTasks();
+                    this.updateStatistics();
+                }
+            }
+
+            exportTasks() {
+                const dataStr = JSON.stringify(this.tasks, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `tasks-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+            }
+
+            importTasks() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'application/json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const imported = JSON.parse(event.target.result);
+                            if (Array.isArray(imported)) {
+                                this.tasks = imported;
+                                this.saveTasks();
+                                this.renderTasks();
+                                this.updateStatistics();
+                                alert('Tasks imported successfully!');
+                            }
+                        } catch (error) {
+                            alert('Error importing tasks. Please check the file format.');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            }
+
+            attachEventListeners() {
+                // Add task form
+                document.getElementById('taskForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const task = {
+                        title: document.getElementById('taskTitle').value,
+                        description: document.getElementById('taskDescription').value,
+                        priority: document.getElementById('taskPriority').value,
+                        category: document.getElementById('taskCategory').value,
+                        dueDate: document.getElementById('taskDueDate').value
+                    };
+                    this.addTask(task);
+                    e.target.reset();
+                });
+
+                // Edit form
+                document.getElementById('editForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const id = parseInt(document.getElementById('editTaskId').value);
+                    const updates = {
+                        title: document.getElementById('editTaskTitle').value,
+                        description: document.getElementById('editTaskDescription').value,
+                        priority: document.getElementById('editTaskPriority').value,
+                        category: document.getElementById('editTaskCategory').value,
+                        dueDate: document.getElementById('editTaskDueDate').value
+                    };
+                    this.updateTask(id, updates);
+                    document.getElementById('editModal').classList.add('hidden');
+                });
+
+                document.getElementById('cancelEdit').addEventListener('click', () => {
+                    document.getElementById('editModal').classList.add('hidden');
+                });
+
+                // Filter buttons
+                document.getElementById('showAll').addEventListener('click', () => {
+                    this.currentFilter = 'all';
+                    this.renderTasks();
+                });
+
+                document.getElementById('showActive').addEventListener('click', () => {
+                    this.currentFilter = 'active';
+                    this.renderTasks();
+                });
+
+                document.getElementById('showCompleted').addEventListener('click', () => {
+                    this.currentFilter = 'completed';
+                    this.renderTasks();
+                });
+
+                // Search and filters
+                document.getElementById('searchTasks').addEventListener('input', () => this.renderTasks());
+                document.getElementById('filterCategory').addEventListener('change', () => this.renderTasks());
+                document.getElementById('filterPriority').addEventListener('change', () => this.renderTasks());
+                document.getElementById('sortTasks').addEventListener('change', () => this.renderTasks());
+
+                // Quick actions
+                document.getElementById('clearCompleted').addEventListener('click', () => this.clearCompleted());
+                document.getElementById('exportTasks').addEventListener('click', () => this.exportTasks());
+                document.getElementById('importTasks').addEventListener('click', () => this.importTasks());
+
+                // AI Features
+                document.getElementById('aiBreakdownBtn').addEventListener('click', () => this.aiBreakdown());
+                document.getElementById('aiSuggestPriorityBtn').addEventListener('click', () => this.aiSuggestPriority());
+                document.getElementById('getAiInsights').addEventListener('click', () => this.getAIInsights());
+            }
+
+            // AI Features (Mock implementation - can be replaced with real AI API)
+            aiBreakdown() {
+                const title = document.getElementById('taskTitle').value;
+                const description = document.getElementById('taskDescription').value;
+
+                if (!title) {
+                    alert('Please enter a task title first!');
+                    return;
+                }
+
+                // Simulate AI processing
+                const aiInsights = document.getElementById('aiInsights');
+                aiInsights.innerHTML = '<p class="bg-white/20 rounded p-3 backdrop-blur ai-thinking">🤖 AI is analyzing your task...</p>';
+
+                setTimeout(() => {
+                    const subtasks = this.generateSubtasks(title, description);
+                    const subtasksList = subtasks.map(st => `<li class="ml-4">▸ ${st}</li>`).join('');
+                    
+                    aiInsights.innerHTML = `
+                        <div class="bg-white/20 rounded p-3 backdrop-blur">
+                            <strong>🎯 Suggested Breakdown:</strong>
+                            <ul class="mt-2 space-y-1 text-sm">${subtasksList}</ul>
+                            <button onclick="taskManager.applySubtasks(${JSON.stringify(subtasks).replace(/"/g, '&quot;')})" 
+                                class="mt-2 w-full bg-white/30 hover:bg-white/40 px-3 py-1 rounded text-sm font-semibold">
+                                Apply Breakdown
+                            </button>
+                        </div>
+                    `;
+                }, 1500);
+            }
+
+            generateSubtasks(title, description) {
+                // Mock AI logic - in real app, this would call an AI API
+                const keywords = (title + ' ' + description).toLowerCase();
+                
+                if (keywords.includes('project') || keywords.includes('develop')) {
+                    return ['Research and planning', 'Create initial draft/prototype', 'Review and iterate', 'Final testing and delivery'];
+                } else if (keywords.includes('learn') || keywords.includes('study')) {
+                    return ['Gather learning materials', 'Study core concepts', 'Practice with examples', 'Test knowledge'];
+                } else if (keywords.includes('write') || keywords.includes('report')) {
+                    return ['Outline main points', 'Draft content', 'Edit and refine', 'Proofread and finalize'];
+                } else if (keywords.includes('meeting') || keywords.includes('call')) {
+                    return ['Set agenda', 'Prepare materials', 'Conduct meeting', 'Follow up on action items'];
+                } else {
+                    return ['Prepare and gather resources', 'Execute main task', 'Review results', 'Document and close'];
+                }
+            }
+
+            applySubtasks(subtasks) {
+                const task = {
+                    title: document.getElementById('taskTitle').value,
+                    description: document.getElementById('taskDescription').value,
+                    priority: document.getElementById('taskPriority').value,
+                    category: document.getElementById('taskCategory').value,
+                    dueDate: document.getElementById('taskDueDate').value,
+                    subtasks: subtasks
+                };
+                this.addTask(task);
+                document.getElementById('taskForm').reset();
+                
+                const aiInsights = document.getElementById('aiInsights');
+                aiInsights.innerHTML = '<p class="bg-white/20 rounded p-3 backdrop-blur">✅ Task created with AI breakdown!</p>';
+            }
+
+            aiSuggestPriority() {
+                const title = document.getElementById('taskTitle').value;
+                const description = document.getElementById('taskDescription').value;
+                const dueDate = document.getElementById('taskDueDate').value;
+
+                if (!title) {
+                    alert('Please enter a task title first!');
+                    return;
+                }
+
+                // Mock AI priority suggestion
+                const aiInsights = document.getElementById('aiInsights');
+                aiInsights.innerHTML = '<p class="bg-white/20 rounded p-3 backdrop-blur ai-thinking">🤖 AI is analyzing priority...</p>';
+
+                setTimeout(() => {
+                    const suggestedPriority = this.determinePriority(title, description, dueDate);
+                    const reasons = this.getPriorityReasons(title, description, dueDate, suggestedPriority);
+                    
+                    document.getElementById('taskPriority').value = suggestedPriority;
+                    
+                    const priorityColors = {
+                        high: 'text-red-300',
+                        medium: 'text-yellow-300',
+                        low: 'text-green-300'
+                    };
+                    
+                    aiInsights.innerHTML = `
+                        <div class="bg-white/20 rounded p-3 backdrop-blur">
+                            <strong>✨ AI Recommendation:</strong>
+                            <p class="mt-2 ${priorityColors[suggestedPriority]} font-bold text-lg">
+                                ${suggestedPriority.toUpperCase()} Priority
+                            </p>
+                            <p class="mt-2 text-sm">${reasons}</p>
+                        </div>
+                    `;
+                }, 1000);
+            }
+
+            determinePriority(title, description, dueDate) {
+                const text = (title + ' ' + description).toLowerCase();
+                const urgentKeywords = ['urgent', 'asap', 'critical', 'emergency', 'important', 'deadline'];
+                const hasUrgentKeyword = urgentKeywords.some(kw => text.includes(kw));
+                
+                if (dueDate) {
+                    const daysUntilDue = Math.ceil((new Date(dueDate) - new Date()) / (1000 * 60 * 60 * 24));
+                    if (daysUntilDue <= 3 || hasUrgentKeyword) return 'high';
+                    if (daysUntilDue <= 7) return 'medium';
+                }
+                
+                if (hasUrgentKeyword) return 'high';
+                if (text.includes('meeting') || text.includes('call') || text.includes('presentation')) return 'high';
+                
+                return 'medium';
+            }
+
+            getPriorityReasons(title, description, dueDate, priority) {
+                const reasons = [];
+                if (dueDate) {
+                    const daysUntilDue = Math.ceil((new Date(dueDate) - new Date()) / (1000 * 60 * 60 * 24));
+                    if (daysUntilDue <= 3) reasons.push(`Due in ${daysUntilDue} days`);
+                }
+                
+                const text = (title + ' ' + description).toLowerCase();
+                if (text.includes('urgent') || text.includes('critical')) reasons.push('Contains urgent keywords');
+                if (text.includes('meeting') || text.includes('presentation')) reasons.push('Time-sensitive event');
+                
+                if (reasons.length === 0) reasons.push('Based on task context and timing');
+                
+                return 'Reason: ' + reasons.join(', ');
+            }
+
+            getAIInsights() {
+                const aiInsights = document.getElementById('aiInsights');
+                aiInsights.innerHTML = '<p class="bg-white/20 rounded p-3 backdrop-blur ai-thinking">🤖 Generating insights...</p>';
+
+                setTimeout(() => {
+                    const insights = this.generateInsights();
+                    aiInsights.innerHTML = `
+                        <div class="bg-white/20 rounded p-3 backdrop-blur space-y-2">
+                            ${insights.map(insight => `<p class="text-sm">💡 ${insight}</p>`).join('')}
+                        </div>
+                    `;
+                }, 1200);
+            }
+
+            generateInsights() {
+                const insights = [];
+                const activeTasks = this.tasks.filter(t => !t.completed);
+                const highPriority = activeTasks.filter(t => t.priority === 'high');
+                const overdue = activeTasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date());
+
+                if (highPriority.length > 5) {
+                    insights.push(`You have ${highPriority.length} high-priority tasks. Consider delegating or rescheduling some.`);
+                }
+
+                if (overdue.length > 0) {
+                    insights.push(`⚠️ ${overdue.length} task(s) are overdue. Focus on these first!`);
+                }
+
+                const categoryCount = {};
+                activeTasks.forEach(t => {
+                    categoryCount[t.category] = (categoryCount[t.category] || 0) + 1;
+                });
+                const topCategory = Object.keys(categoryCount).reduce((a, b) => 
+                    categoryCount[a] > categoryCount[b] ? a : b, 'work');
+                
+                if (activeTasks.length > 0) {
+                    insights.push(`Most of your tasks are in "${topCategory}" category. Consider time blocking for efficiency.`);
+                }
+
+                if (activeTasks.length > 15) {
+                    insights.push('You have many active tasks. Try breaking them into weekly sprints.');
+                } else if (activeTasks.length === 0) {
+                    insights.push('Great job! All tasks completed. Time to plan your next goals.');
+                }
+
+                const completionRate = this.tasks.length > 0 ? 
+                    (this.tasks.filter(t => t.completed).length / this.tasks.length) * 100 : 0;
+                
+                if (completionRate > 70) {
+                    insights.push('🎉 Excellent completion rate! Keep up the great work!');
+                } else if (completionRate < 30 && this.tasks.length > 5) {
+                    insights.push('Try setting smaller, achievable goals to boost your completion rate.');
+                }
+
+                return insights.length > 0 ? insights : ['Create tasks to get personalized AI insights!'];
+            }
+        }
+
+        // Initialize the app
+        const taskManager = new TaskManager();
+    </script>
+</body>
+</html>
